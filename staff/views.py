@@ -14,8 +14,16 @@ class UserRegisterView(APIView):
             user = serializer.save()
             user.set_password(data['password'])  # Hash password before saving
             user.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'success': True,
+                'message': 'User registered successfully',
+                'user': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'success': False,
+            'message': 'Registration failed',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginView(APIView):
@@ -26,8 +34,9 @@ class UserLoginView(APIView):
         try:
             user = UserModel.objects.get(username=username, is_deleted=False)
         except UserModel.DoesNotExist:
-            return Response({'error': 'User not found or deleted'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success': False, 'message': 'User not found or deleted'},
+                            status=status.HTTP_404_NOT_FOUND)
 
         if user.check_password(password):
-            return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid password'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': True, 'message': 'Login successful'}, status=status.HTTP_200_OK)
+        return Response({'success': False, 'message': 'Invalid password'}, status=status.HTTP_400_BAD_REQUEST)
